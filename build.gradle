@@ -1,79 +1,77 @@
-buildscript {
-    repositories {
-        jcenter()
-        maven {
-            name = "forge"
-            url = "http://files.minecraftforge.net/maven"
-        }
-    }
-    dependencies {
-        classpath "net.minecraftforge.gradle:ForgeGradle:2.3-SNAPSHOT"
-    }
+plugins {
+    id 'fabric-loom' version '0.9-SNAPSHOT'
+    id 'maven-publish'
 }
 
-apply plugin: "net.minecraftforge.gradle.forge"
+sourceCompatibility = JavaVersion.VERSION_16
+targetCompatibility = JavaVersion.VERSION_16
 
 version = "$mod_version.$patch_version"
 group = "com.teamwizardry"
-archivesBaseName = "refraction-$mc_version"
+archivesBaseName = "refraction-$minecraft_version"
 
-sourceCompatibility = 1.8
-targetCompatibility = 1.8
-
-minecraft {
-    version = "$mc_version-$forge_version"
-    runDir = "run"
-    mappings = "$mcp_version"
-
-    replace 'GRADLE:VERSION', "$mod_version"
-    replace 'required-before:librarianlib', 'required-before:librarianlib@' + liblib_version
-
-    replaceIn 'Constants.java'
-}
+sourceCompatibility = JavaVersion.VERSION_16
+targetCompatibility = JavaVersion.VERSION_16
 
 repositories {
     mavenCentral()
-    maven { url = "http://maven.bluexin.be/repository/snapshots/" }
-    maven { url = "http://dvs1.progwml6.com/files/maven" }
-    maven { url = "http://maven.tterrag.com/" }
-    maven { url = "http://maven.blamejared.com" }
-    maven { url = 'http://maven.mcmoddev.com' }
+    maven { url = "https://s01.oss.sonatype.org/content/repositories/snapshots" }
+    maven { url = "https://dvs1.progwml6.com/files/maven" }
+    maven { url = "https://maven.tterrag.com/" }
+    maven { url = "https://maven.blamejared.com" }
+    maven { url = 'https://maven.mcmoddev.com' }
+    maven { url 'https://maven.shedaniel.me' }
+    maven { url = "https://raw.githubusercontent.com/Technici4n/Technici4n-maven/master/" }
 }
 
 dependencies {
-    compile "com.teamwizardry.librarianlib:librarianlib-1.12.2:$liblib_version-SNAPSHOT:deobf"
+    // To change the versions see the gradle.properties file
+    minecraft "com.mojang:minecraft:${project.minecraft_version}"
+    mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
+    modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
 
-    deobfCompile "mezz.jei:jei_1.12.2:$jei_version:api"
-    compile "CraftTweaker2:CraftTweaker2-MC1120-Main:1.12-$ct_version"
-    compile "net.darkhax.tesla:Tesla-1.12.2:$tesla_version"
+    // Fabric API. This is technically optional, but you probably want it anyway.
+    modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
 
-    runtime "mezz.jei:jei_1.12.2:$jei_version"
+    modImplementation "com.teamwizardry.librarianlib:facade:$liblib_version-SNAPSHOT"
+
+    modCompileOnly "me.shedaniel:RoughlyEnoughItems-api-fabric:${rei_version}"
+    modRuntime "me.shedaniel:RoughlyEnoughItems-fabric:${rei_version}"
+
+//    compile "CraftTweaker2:CraftTweaker2-MC1120-Main:1.12-$ct_version"
+    modImplementation "dev.technici4n:FastTransferLib:${project.ftl_version}"
+    include "dev.technici4n:FastTransferLib:${project.ftl_version}"
 }
+
 
 processResources {
-    // this will ensure that this task is redone when the versions change.
     inputs.property "version", project.version
-    inputs.property "mcversion", project.minecraft.version
 
-    // replace stuff in mcmod.info, nothing else
-    from(sourceSets.main.resources.srcDirs) {
-        include "mcmod.info"
-
-        // replace version and mcversion
-        expand "version": project.version,
-                "mcversion": project.minecraft.version
-    }
-
-    // copy everything else, thats not the mcmod.info
-    from(sourceSets.main.resources.srcDirs) {
-        exclude "mcmod.info"
+    filesMatching("fabric.mod.json") {
+        expand "version": project.version
     }
 }
 
-idea {
-    module {
-        inheritOutputDirs = false
-        outputDir = compileJava.destinationDir
-        testOutputDir = compileTestJava.destinationDir
+tasks.withType(JavaCompile).configureEach {
+    // ensure that the encoding is set to UTF-8, no matter what the system default is
+    // this fixes some edge cases with special characters not displaying correctly
+    // see http://yodaconditions.net/blog/fix-for-java-file-encoding-problems-with-gradle.html
+    // If Javadoc is generated, this must be specified in that task too.
+    it.options.encoding = "UTF-8"
+
+    // Minecraft 1.17 (21w19a) upwards uses Java 16.
+    it.options.release = 16
+}
+
+java {
+    // Loom will automatically attach sourcesJar to a RemapSourcesJar task and to the "build" task
+    // if it is present.
+    // If you remove this line, sources will not be generated.
+    withSourcesJar()
+}
+
+jar {
+    from("LICENSE") {
+        rename { "${it}_${project.archivesBaseName}"}
     }
 }

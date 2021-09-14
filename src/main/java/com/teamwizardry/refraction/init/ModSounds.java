@@ -1,10 +1,9 @@
 package com.teamwizardry.refraction.init;
 
 import com.teamwizardry.refraction.api.Constants;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.SoundEvent;
-import net.minecraftforge.fml.common.registry.ForgeRegistries;
-import net.minecraftforge.fml.common.registry.GameRegistry;
+import net.minecraft.sound.SoundEvent;
+import net.minecraft.util.Identifier;
+import net.minecraft.util.registry.Registry;
 
 import java.util.ArrayList;
 
@@ -133,9 +132,10 @@ public class ModSounds {
 	}
 
 	private static SoundEvent registerSound(String soundName) {
-		final ResourceLocation soundID = new ResourceLocation(Constants.MOD_ID, soundName);
+		final Identifier soundID = new Identifier(Constants.MOD_ID, soundName);
 		SoundEvent soundEvent = new SoundEvent(soundID).setRegistryName(soundID);
-		ForgeRegistries.SOUND_EVENTS.register(soundEvent);
+		Registry.register(Registry.SOUND_EVENT, soundID, soundEvent);
+
 		return soundEvent;
 	}
 }

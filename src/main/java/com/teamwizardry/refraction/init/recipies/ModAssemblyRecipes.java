@@ -3,6 +3,7 @@ package com.teamwizardry.refraction.init.recipies;
 import com.teamwizardry.refraction.api.recipe.ColorConsumingBehavior;
 import com.teamwizardry.refraction.init.ModBlocks;
 import com.teamwizardry.refraction.init.ModItems;
+import net.minecraft.block.Blocks;
 import net.minecraft.init.Blocks;
 import net.minecraft.item.ItemStack;
 import net.minecraftforge.oredict.OreDictionary;
