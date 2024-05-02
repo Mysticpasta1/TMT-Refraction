@@ -91,13 +91,13 @@ public class LaserRenderer {
 	}
 
 	public void update() {
-		lasers.entrySet().removeIf((e) -> {
-			if (e.getValue() <= 0) return true;
-			else {
-				e.setValue(e.getValue() - 1);
-				return false;
+		for(LaserRenderInfo info : lasers.keySet()) {
+			if (lasers.get(info) <= 0) {
+				lasers.remove(info);
+			} else {
+				lasers.put(info, lasers.get(info) - 1);
 			}
-		});
+		}
 	}
 
 	public static class LaserRenderInfo {
