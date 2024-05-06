@@ -2,6 +2,8 @@ package com.teamwizardry.refraction.init;
 
 import com.teamwizardry.refraction.api.lib.LibOreDict;
 import com.teamwizardry.refraction.common.block.*;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import net.minecraftforge.oredict.OreDictionary;
@@ -70,14 +72,7 @@ public class ModBlocks {
 		DARK_BRIDGE = new BlockDarkBridge();
 	}
 
-	public static void initOreDict() {
-		OreDictionary.registerOre(LibOreDict.LENS, LENS);
-		OreDictionary.registerOre(LibOreDict.OPTIC_FIBER, OPTIC_FIBER);
-		OreDictionary.registerOre(LibOreDict.REFLECTIVE_ALLOY_BLOCK, REFLECTIVE_ALLOY_BLOCK);
-		OreDictionary.registerOre(LibOreDict.TRANSLOCATOR, TRANSLOCATOR);
-	}
-
-	@SideOnly(Side.CLIENT)
+	@OnlyIn(Dist.CLIENT)
 	public static void initModels() {
 		ASSEMBLY_TABLE.initModel();
 		DISCO_BALL.initModel();

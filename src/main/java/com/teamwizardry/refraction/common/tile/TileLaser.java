@@ -17,6 +17,7 @@ import com.teamwizardry.refraction.api.beam.EffectTracker;
 import net.minecraft.block.BlockDirectional;
 import net.minecraft.init.Items;
 import net.minecraft.item.ItemStack;
+import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.Vec3d;
@@ -32,7 +33,7 @@ import java.util.concurrent.ThreadLocalRandom;
  * Created by Demoniaque
  */
 @TileRegister("laser")
-public class TileLaser extends TileModTickable {
+public class TileLaser extends TileEntity {
 
     @Module
     public ModuleInventory inventory = new ModuleInventory(new ItemStackHandler(1) {

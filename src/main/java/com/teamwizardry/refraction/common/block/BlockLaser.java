@@ -8,23 +8,34 @@ import com.teamwizardry.refraction.api.beam.IBeamImmune;
 import com.teamwizardry.refraction.api.soundmanager.ISoundEmitter;
 import com.teamwizardry.refraction.common.item.ItemScrewDriver;
 import com.teamwizardry.refraction.common.tile.TileLaser;
-import net.minecraft.block.SoundType;
+import net.minecraft.block.*;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.properties.PropertyEnum;
 import net.minecraft.block.state.BlockStateContainer;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.util.ITooltipFlag;
 import net.minecraft.entity.EntityLivingBase;
+import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.init.Items;
 import net.minecraft.inventory.InventoryHelper;
+import net.minecraft.item.BlockItemUseContext;
 import net.minecraft.item.ItemStack;
+import net.minecraft.item.Items;
+import net.minecraft.state.DirectionProperty;
 import net.minecraft.tileentity.TileEntity;
+import net.minecraft.util.ActionResultType;
 import net.minecraft.util.BlockRenderLayer;
+import net.minecraft.util.Direction;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.EnumHand;
+import net.minecraft.util.Hand;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.BlockRayTraceResult;
+import net.minecraft.world.IBlockReader;
 import net.minecraft.world.World;
+import net.minecraftforge.common.ToolType;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -34,17 +45,16 @@ import java.util.Objects;
 /**
  * Created by Demoniaque
  */
-public class BlockLaser extends BlockModContainer implements IBeamImmune, ISoundEmitter {
+public class BlockLaser extends DirectionalBlock implements IBeamImmune, ISoundEmitter {
 
-	public static final PropertyEnum<EnumFacing> FACING = PropertyEnum.create("facing", EnumFacing.class);
+	public static final DirectionProperty FACING = DirectionalBlock.FACING;
 
-	public BlockLaser() {
-		super("laser", Material.IRON);
-		setHardness(1F);
-		setSoundType(SoundType.METAL);
-		setTickRandomly(true);
+	public BlockLaser(Properties properties) {
+		//"laser", Material.IRON
+		super(properties.hardnessAndResistance(1F, 1F)
+				.sound(SoundType.METAL).tickRandomly());
 
-		setDefaultState(blockState.getBaseState().withProperty(FACING, EnumFacing.NORTH));
+		setDefaultState(getDefaultState().with(FACING, Direction.NORTH));
 	}
 
 	private TileLaser getTE(World world, BlockPos pos) {
@@ -57,12 +67,12 @@ public class BlockLaser extends BlockModContainer implements IBeamImmune, ISound
 	}
 
 	@Override
-	public boolean hasComparatorInputOverride(@Nonnull IBlockState state) {
+	public boolean hasComparatorInputOverride(@Nonnull BlockState state) {
 		return true;
 	}
 
 	@Override
-	public int getComparatorInputOverride(@Nonnull IBlockState blockState, @Nonnull World worldIn, @Nonnull BlockPos pos) {
+	public int getComparatorInputOverride(@Nonnull BlockState blockState, @Nonnull World worldIn, @Nonnull BlockPos pos) {
 		TileLaser te = getTE(worldIn, pos);
 		if (!te.inventory.getHandler().getStackInSlot(0).isEmpty())
 			return (int) (te.inventory.getHandler().getStackInSlot(0).getCount() / 64.0 * 15);
@@ -70,68 +80,40 @@ public class BlockLaser extends BlockModContainer implements IBeamImmune, ISound
 	}
 
 	@Override
-	public boolean onBlockActivated(@Nonnull World worldIn, @Nonnull BlockPos pos, @Nonnull IBlockState state, @Nonnull EntityPlayer playerIn, @Nonnull EnumHand hand, @Nonnull EnumFacing facing, float hitX, float hitY, float hitZ) {
+	public ActionResultType onBlockActivated(@Nonnull BlockState state, @Nonnull World worldIn, @Nonnull BlockPos pos, @Nonnull PlayerEntity playerIn, @Nonnull Hand hand, BlockRayTraceResult result) {
 		ItemStack heldItem = playerIn.getHeldItem(hand);
 
 		if (!heldItem.isEmpty()) {
-			if (heldItem.getItem() != Items.GLOWSTONE_DUST) return false;
+			if (heldItem.getItem() != Items.GLOWSTONE_DUST) return ActionResultType.PASS;
 
 			TileLaser laser = getTE(worldIn, pos);
-			if (laser == null) return false;
+			if (laser == null) return ActionResultType.PASS;
 			ItemStack stack = heldItem.copy();
 			stack.setCount(1);
 			ItemStack left = laser.inventory.getHandler().insertItem(0, stack, false);
 			if (left.isEmpty()) heldItem.setCount(heldItem.getCount() - 1);
-			laser.markDirty();
+			laser.tick();
 		}
-		return true;
-	}
-
-	@Override
-	@SuppressWarnings("deprecation")
-	public @Nonnull IBlockState getStateForPlacement(World worldIn, BlockPos pos, EnumFacing facing, float hitX, float hitY, float hitZ, int meta, EntityLivingBase placer) {
-		if (placer.rotationPitch > 45) return this.getStateFromMeta(meta).withProperty(FACING, EnumFacing.UP);
-		if (placer.rotationPitch < -45) return this.getStateFromMeta(meta).withProperty(FACING, EnumFacing.DOWN);
-
-		return this.getStateFromMeta(meta).withProperty(FACING, placer.getAdjustedHorizontalFacing().getOpposite());
-	}
-
-	@Override
-	@SuppressWarnings("deprecation")
-	public @Nonnull IBlockState getStateFromMeta(int meta) {
-		return getDefaultState().withProperty(FACING, EnumFacing.byIndex(meta & 7));
-	}
-
-	@Override
-	public int getMetaFromState(IBlockState state) {
-		return state.getValue(FACING).getIndex();
-	}
-
-	@Override
-	protected @Nonnull BlockStateContainer createBlockState() {
-		return new BlockStateContainer(this, FACING);
-	}
-
-	@Override
-	public boolean canRenderInLayer(IBlockState state, BlockRenderLayer layer) {
-		return layer == BlockRenderLayer.CUTOUT;
-	}
-
-	@Override
-	@SuppressWarnings("deprecation")
-	public boolean isFullCube(IBlockState state) {
-		return false;
-	}
-
-	@Override
-	@SuppressWarnings("deprecation")
-	public boolean isOpaqueCube(IBlockState blockState) {
-		return false;
+		return ActionResultType.SUCCESS;
 	}
 
 	@Nullable
 	@Override
-	public TileEntity createTileEntity(@Nonnull World world,@Nonnull IBlockState iBlockState) {
+	public BlockState getStateForPlacement(BlockItemUseContext context) {
+		if (context.getPlacementYaw() > 45) return this.getDefaultState().with(FACING, Direction.UP);
+		if (context.getPlacementYaw() < -45) return this.getDefaultState().with(FACING, Direction.DOWN);
+
+		return this.getDefaultState().with(FACING, context.getPlacementHorizontalFacing().getOpposite());
+	}
+
+	@Override
+	public BlockRenderType getRenderType(BlockState state) {
+		return BlockRenderType.MODEL;
+	}
+
+	@Nullable
+	@Override
+	public TileEntity createTileEntity(BlockState state, IBlockReader world) {
 		return new TileLaser();
 	}
 
@@ -142,17 +124,8 @@ public class BlockLaser extends BlockModContainer implements IBeamImmune, ISound
 	}
 
 	@Override
-	public boolean isToolEffective(String type,@Nonnull IBlockState state) {
-		return super.isToolEffective(type, state) || Objects.equals(type, ItemScrewDriver.SCREWDRIVER_TOOL_CLASS);
-	}
-
-	@Override
-	public void breakBlock(@Nonnull World worldIn,@Nonnull BlockPos pos,@Nonnull IBlockState state) {
-		TileLaser laser = (TileLaser) worldIn.getTileEntity(pos);
-		if (laser != null)
-			for (ItemStack stack : CapsUtils.getListOfItems(laser.inventory.getHandler()))
-				InventoryHelper.spawnItemStack(worldIn, pos.getX(), pos.getY(), pos.getZ(), stack);
-		super.breakBlock(worldIn, pos, state);
+	public boolean isToolEffective(BlockState state, ToolType tool) {
+		return super.isToolEffective(state, tool) || Objects.equals(tool.getName(), ItemScrewDriver.SCREWDRIVER_TOOL_CLASS);
 	}
 
 	@Override
