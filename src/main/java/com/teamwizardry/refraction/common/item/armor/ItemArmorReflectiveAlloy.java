@@ -10,6 +10,7 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.inventory.EntityEquipmentSlot;
+import net.minecraft.inventory.EquipmentSlotType;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.DamageSource;
 import net.minecraft.util.ResourceLocation;
@@ -30,7 +31,7 @@ public class ItemArmorReflectiveAlloy extends ItemModArmor implements IReflectiv
 	public final EntityEquipmentSlot slot;
 	protected Map<EntityEquipmentSlot, ModelBiped> models = null;
 
-	public ItemArmorReflectiveAlloy(String name, EntityEquipmentSlot slot) {
+	public ItemArmorReflectiveAlloy(String name, EquipmentSlotType slot) {
 		super(name, ArmorMaterial.IRON, slot);
 		setMaxStackSize(1);
 		setMaxDamage(300);

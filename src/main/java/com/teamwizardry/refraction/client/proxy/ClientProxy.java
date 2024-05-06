@@ -12,7 +12,6 @@ import com.teamwizardry.refraction.client.render.RenderPlasma;
 import com.teamwizardry.refraction.common.entity.EntityGrenade;
 import com.teamwizardry.refraction.common.entity.EntityLaserPointer;
 import com.teamwizardry.refraction.common.entity.EntityPlasma;
-import com.teamwizardry.refraction.common.proxy.CommonProxy;
 import com.teamwizardry.refraction.init.ModBlocks;
 import com.teamwizardry.refraction.init.ModGuiPages;
 import com.teamwizardry.refraction.init.ModItems;

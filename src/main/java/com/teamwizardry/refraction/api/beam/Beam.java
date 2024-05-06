@@ -1,26 +1,19 @@
 package com.teamwizardry.refraction.api.beam;
 
-import com.teamwizardry.librarianlib.features.network.PacketHandler;
 import com.teamwizardry.refraction.api.ConfigValues;
 import com.teamwizardry.refraction.api.raytrace.RayTrace;
 import com.teamwizardry.refraction.api.Utils;
 import com.teamwizardry.refraction.common.effect.EffectAesthetic;
 import com.teamwizardry.refraction.common.entity.EntityLaserPointer;
 import com.teamwizardry.refraction.common.network.PacketBeamParticle;
-import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.RayTraceResult;
-import net.minecraft.util.math.Vec3d;
+import net.minecraft.util.math.vector.Vector3d;
 import net.minecraft.world.World;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.util.INBTSerializable;
-import net.minecraftforge.fml.common.FMLCommonHandler;
-import net.minecraftforge.fml.common.eventhandler.Event;
-import net.minecraftforge.fml.common.network.NetworkRegistry;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -30,24 +23,24 @@ import java.util.concurrent.ThreadLocalRandom;
 /**
  * Will create a new beam you can spawn.
  */
-public class Beam implements INBTSerializable<NBTTagCompound> {
+public class Beam implements INBTSerializable<CompoundNBT> {
 
 	/**
 	 * The initial position the inputBeams comes from.
 	 */
-	public Vec3d initLoc;
+	public Vector3d initLoc;
 
 	/**
 	 * The vector that specifies the inclination of the beam.
 	 * Set it to your final location and it'll work.
 	 */
-	public Vec3d slope;
+	public Vector3d slope;
 
 	/**
 	 * The destination of the beam. Don't touch this, just set the slope to the final loc
 	 * and let this class handleBeam it unless you know what you're doing.
 	 */
-	public Vec3d finalLoc;
+	public Vector3d finalLoc;
 
 	/**
 	 * The world the beam will spawn in.
@@ -98,7 +91,7 @@ public class Beam implements INBTSerializable<NBTTagCompound> {
 	 */
 	public String customName = "";
 
-	public Beam(@Nonnull World world, @Nonnull Vec3d initLoc, @Nonnull Vec3d slope, @Nonnull Effect effect) {
+	public Beam(@Nonnull World world, @Nonnull Vector3d initLoc, @Nonnull Vector3d slope, @Nonnull Effect effect) {
 		this.world = world;
 		this.initLoc = initLoc;
 		this.slope = slope;
@@ -107,10 +100,10 @@ public class Beam implements INBTSerializable<NBTTagCompound> {
 	}
 
 	public Beam(World world, double initX, double initY, double initZ, double slopeX, double slopeY, double slopeZ, Effect effect) {
-		this(world, new Vec3d(initX, initY, initZ), new Vec3d(slopeX, slopeY, slopeZ), effect);
+		this(world, new Vector3d(initX, initY, initZ), new Vector3d(slopeX, slopeY, slopeZ), effect);
 	}
 
-	public Beam(NBTTagCompound compound) {
+	public Beam(CompoundNBT compound) {
 		deserializeNBT(compound);
 	}
 
@@ -153,7 +146,7 @@ public class Beam implements INBTSerializable<NBTTagCompound> {
 	 * @param slope The slope or destination or final location the beam will point to.
 	 * @return The new beam created. Can be modified as needed.
 	 */
-	public Beam createSimilarBeam(Vec3d slope) {
+	public Beam createSimilarBeam(Vector3d slope) {
 		return createSimilarBeam(finalLoc, slope);
 	}
 
@@ -165,7 +158,7 @@ public class Beam implements INBTSerializable<NBTTagCompound> {
 	 * @param dir  The direction or slope or final destination or location the beam will point to.
 	 * @return The new beam created. Can be modified as needed.
 	 */
-	public Beam createSimilarBeam(Vec3d init, Vec3d dir) {
+	public Beam createSimilarBeam(Vector3d init, Vector3d dir) {
 		return createSimilarBeam(init, dir, effect);
 	}
 
@@ -176,7 +169,7 @@ public class Beam implements INBTSerializable<NBTTagCompound> {
 	 * @param dir  The direction or slope or final destination or location the beam will point to.
 	 * @return The new beam created. Can be modified as needed.
 	 */
-	public Beam createSimilarBeam(Vec3d init, Vec3d dir, Effect effect) {
+	public Beam createSimilarBeam(Vector3d init, Vector3d dir, Effect effect) {
 		return new Beam(world, init, dir, effect)
 				.setAllowedBounceTimes(allowedBounceTimes)
 				.setBouncedTimes(bouncedTimes)
@@ -210,7 +203,7 @@ public class Beam implements INBTSerializable<NBTTagCompound> {
 	/**
 	 * The RayTrace will skip the first time it hits an entity with this uuid
 	 *
-	 * @param uuidToSkip The uuid to skip the first time it's detected
+	 * The uuid to skip the first time it's detected
 	 * @return The new beam created. Can be modified as needed.
 	 */
 	public Beam setEntitySkip(Entity entity) {
@@ -246,7 +239,7 @@ public class Beam implements INBTSerializable<NBTTagCompound> {
 	 * @param slope The final location or destination.
 	 * @return This beam itself for the convenience of editing a beam in one line/chain.
 	 */
-	public Beam setSlope(@Nonnull Vec3d slope) {
+	public Beam setSlope(@Nonnull Vector3d slope) {
 		this.slope = slope;
 		this.finalLoc = slope.normalize().scale(128).add(initLoc);
 		return this;
@@ -268,7 +261,7 @@ public class Beam implements INBTSerializable<NBTTagCompound> {
 	 * @param initLoc The new initial location to set the beam to exciterPos from.
 	 * @return This beam itself for the convenience of editing a beam in one line/chain.
 	 */
-	public Beam setInitLoc(@Nonnull Vec3d initLoc) {
+	public Beam setInitLoc(@Nonnull Vector3d initLoc) {
 		this.initLoc = initLoc;
 		this.finalLoc = slope.normalize().scale(128).add(initLoc);
 		return this;
@@ -322,8 +315,7 @@ public class Beam implements INBTSerializable<NBTTagCompound> {
 				})
 				.trace();
 
-		if (trace.hitVec != null) this.finalLoc = trace.hitVec;
-		else return;
+        this.finalLoc = trace.getHitVec();
 
 		// EFFECT HANDLING //
 		boolean pass = true;

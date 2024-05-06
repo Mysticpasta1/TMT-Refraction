@@ -1,95 +1,164 @@
-plugins {
-    id 'net.minecraftforge.gradle' version '5.+'
-    id 'wtf.gofancy.fancygradle' version '1.1.2-5'
-    id 'org.jetbrains.gradle.plugin.idea-ext' version '1.1.7'
-    id 'org.jetbrains.kotlin.jvm' version "1.9.0"
-}
-
-version = "$mod_version.$patch_version"
-group = "com.teamwizardry"
-archivesBaseName = "refraction-$mc_version"
-
-sourceCompatibility = targetCompatibility = compileJava.sourceCompatibility = compileJava.targetCompatibility = '1.8'
-
-sourceCompatibility = targetCompatibility = 1.8
-
-tasks.withType(JavaCompile).configureEach {
-    options.encoding = 'UTF-8'
-}
-
-fancyGradle {
-    patches {
-        coremods
+buildscript {
+    repositories {
+        maven { url = 'https://files.minecraftforge.net/maven' }
+        jcenter()
+        mavenCentral()
+        maven {
+            name = 'sponge'
+            url = 'https://repo.spongepowered.org/maven'
+        }
+    }
+    dependencies {
+        classpath group: 'net.minecraftforge.gradle', name: 'ForgeGradle', version: '6.+', changing: true
+        classpath group: 'org.spongepowered', name: 'mixingradle', version: '0.7-SNAPSHOT'
     }
 }
+apply plugin: 'net.minecraftforge.gradle'
+// Only edit below this line, the above code adds and enables the necessary things for Forge to be setup.
+apply plugin: 'eclipse'
+apply plugin: 'maven-publish'
+apply plugin: 'org.spongepowered.mixin'
+
+ext.buildnumber = 0
+if (System.getenv('BUILD_NUMBER') != null)
+    project.buildnumber = System.getenv('BUILD_NUMBER')
+else
+    logger.lifecycle "No build number detected, setting to 0"
+
+version = "${mod_version}.${buildnumber}-${mc_version}"
+group = "com.mystic.${modid}" // http://maven.apache.org/guides/mini/guide-naming-conventions.html
+archivesBaseName = "${modid}"
+
+sourceCompatibility = targetCompatibility = compileJava.sourceCompatibility = compileJava.targetCompatibility = '1.8' // Need this here so eclipse task generates correctly.
 
 minecraft {
-    mappings channel: 'stable', version: '39-1.12'
+    // The mappings can be changed at any time, and must be in the following format.
+    // snapshot_YYYYMMDD   Snapshot are built nightly.
+    // stable_#            Stables are built at the discretion of the MCP team.
+    // Use non-default mappings at your own risk. they may not always work.
+    // Simply re-run your setup task after changing the mappings to update your workspace.
+    mappings channel: "snapshot", version: "${mapping}-${mcp_version}"
+    // makeObfSourceJar = false // an Srg named sources jar is made by default. uncomment this to disable.
 
+    accessTransformer = file('src/main/resources/META-INF/accesstransformer.cfg')
+
+    // Default run configurations.
+    // These can be tweaked, removed, or duplicated as needed.
     runs {
         client {
+            property 'mixin.env.disableRefMap', 'true'
             workingDirectory project.file('run')
-            property 'forge.logging.markers', 'REGISTRIES'
+            arg "-mixin.config="+archivesBaseName+".mixins.json"
+
+
+            // Recommended logging level for the console
             property 'forge.logging.console.level', 'debug'
-            environment 'MC_VERSION', '1.12.2'
+
+            mods {
+                examplemod {
+                    source sourceSets.main
+                }
+            }
         }
 
         server {
+            property 'mixin.env.disableRefMap', 'true'
             workingDirectory project.file('run')
-            property 'forge.logging.markers', 'REGISTRIES'
+            arg "-mixin.config="+archivesBaseName+".mixins.json"
+
+
+            // Recommended logging level for the console
             property 'forge.logging.console.level', 'debug'
-            environment 'MC_VERSION', '1.12.2'
+
+            mods {
+                examplemod {
+                    source sourceSets.main
+                }
+            }
         }
     }
 }
 
 repositories {
     mavenCentral()
-    maven { url = "https://maven.bluexin.be/repository/snapshots/" }
-    maven { url = "https://dvs1.progwml6.com/files/maven" }
-    maven { url = "https://maven.tterrag.com/" }
-    maven { url = "https://maven.blamejared.com" }
-    maven { url = 'https://maven.mcmoddev.com' }
-    maven { url = "https://mvnrepository.com/artifact/org.jetbrains/annotations" }
+    maven { setUrl("https://oss.sonatype.org/content/repositories/public/") }
+    maven { setUrl("https://minecraft.curseforge.com/api/maven/") }
+    maven { setUrl("https://repo.spongepowered.org/maven") }
+    maven { setUrl("https://oss.sonatype.org/content/repositories/snapshots/") }
     maven {
-        url "https://cursemaven.com"
-        content {
-            includeGroup "curse.maven"
-        }
+        // location of a maven mirror for JEI files, as a fallback
+        name = "ModMaven"
+        url = "https://modmaven.k-4u.nl"
     }
-    mavenLocal()
+    maven { url = "https://oss.sonatype.org/content/groups/public/"}
+    jcenter()
+    mavenCentral()
+
 }
 
 dependencies {
-    minecraft 'net.minecraftforge:forge:1.12.2-14.23.5.2860'
+    // Specify the version of Minecraft to use, If this is any group other then 'net.minecraft' it is assumed
+    // that the dep is a ForgeGradle 'patcher' dependency. And it's patches will be applied.
+    // The userdev artifact is a special name and will get all sorts of transformations applied to it.
+    minecraft "net.minecraftforge:forge:${mc_version}-${forge_version}" //21
 
-    implementation 'org.jetbrains:annotations:16.0.2'
-    implementation fg.deobf("com.teamwizardry.librarianlib:librarianlib-1.12.2:$liblib_version-SNAPSHOT:deobf")
-    compileOnly "mezz.jei:jei_1.12.2:$jei_version:api"
-    implementation fg.deobf("curse.maven:forgelin-continuous-456403:4635770")
-    implementation fg.deobf("curse.maven:shadowfacts-forgelin-248453:2785465")
-    implementation fg.deobf("CraftTweaker2:CraftTweaker2-MC1120-Main:1.12-$ct_version")
-    runtimeOnly fg.deobf("CraftTweaker2:CraftTweaker2-MC1120-Main:1.12-$ct_version")
-    implementation fg.deobf("CraftTweaker2:CraftTweaker2-API:$ct_version")
-    runtimeOnly fg.deobf("CraftTweaker2:CraftTweaker2-API:$ct_version")
-    implementation fg.deobf("CraftTweaker2:ZenScript:$ct_version")
-    runtimeOnly fg.deobf("CraftTweaker2:ZenScript:$ct_version")
-    implementation fg.deobf("net.darkhax.tesla:Tesla-1.12.2:$tesla_version")
-    runtimeOnly "mezz.jei:jei_1.12.2:$jei_version"
+    // You may put jars on which you depend on in ./libs or you may define them like so..
+    // compile "some.group:artifact:version:classifier"
+    // compile "some.group:artifact:version"
+
+    // Real examples
+    // compile 'com.mod-buildcraft:buildcraft:6.0.8:dev'  // adds buildcraft to the dev env
+    // compile 'com.googlecode.efficient-java-matrix-library:ejml:0.24' // adds ejml to the dev env
+
+    // The 'provided' configuration is for optional dependencies that exist at compile-time but might not at runtime.
+    // provided 'com.mod-buildcraft:buildcraft:6.0.8:dev'
+
+    // These dependencies get remapped to your current MCP mappings
+    // deobf 'com.mod-buildcraft:buildcraft:6.0.8:dev'
+
+    // For more info...
+    // http://www.gradle.org/docs/current/userguide/artifact_dependencies_tutorial.html
+    // http://www.gradle.org/docs/current/userguide/dependency_management.html
+
 }
 
+// Example for how to get properties into the manifest for reading by the runtime..
 jar {
     manifest {
         attributes([
-                "Specification-Title": "refraction",
-                "Specification-Vendor": "Mysticpasta1",
+                "Specification-Title": "${modid}",
+                "Specification-Vendor": "examplemodsareus",
                 "Specification-Version": "1", // We are version 1 of ourselves
                 "Implementation-Title": project.name,
                 "Implementation-Version": "${version}",
-                "Implementation-Vendor" :"Mysticpasta1",
-                "Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")
+                "Implementation-Vendor" :"examplemodsareus",
+                "MixinConfigs": "${modid}.mixins.json"
         ])
     }
 }
 
-jar.finalizedBy('reobfJar')
+// Example configuration to allow publishing using the maven-publish task
+// we define a custom artifact that is sourced from the reobfJar output task
+// and then declare that to be published
+// Note you'll need to add a repository here
+def reobfFile = file("$buildDir/reobfJar/output.jar")
+def reobfArtifact = artifacts.add('default', reobfFile) {
+    type 'jar'
+    builtBy 'reobfJar'
+}
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            artifact reobfArtifact
+        }
+    }
+    repositories {
+        maven {
+            url "file:///${project.projectDir}/mcmodsrepo"
+        }
+    }
+}
+
+mixin {
+    add sourceSets.main, "${modid}.refmap.json"
+}

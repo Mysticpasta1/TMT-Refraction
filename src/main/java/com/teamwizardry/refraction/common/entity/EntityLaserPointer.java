@@ -5,7 +5,12 @@ import com.teamwizardry.librarianlib.features.base.entity.LivingBaseEntityMod;
 import com.teamwizardry.refraction.common.item.ItemLaserPen;
 import com.teamwizardry.refraction.init.ModItems;
 import io.netty.buffer.ByteBuf;
+import net.minecraft.entity.EntitySize;
+import net.minecraft.entity.EntityType;
+import net.minecraft.entity.LivingEntity;
+import net.minecraft.entity.Pose;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.inventory.EntityEquipmentSlot;
 import net.minecraft.item.ItemStack;
 import net.minecraft.network.datasync.DataParameter;
@@ -21,32 +26,32 @@ import net.minecraftforge.fml.common.registry.IEntityAdditionalSpawnData;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.lang.ref.WeakReference;
+import java.util.Objects;
 import java.util.UUID;
 
 
 /**
  * Created by TheCodeWarrior
  */
-public class EntityLaserPointer extends LivingBaseEntityMod implements IEntityAdditionalSpawnData {
+public class EntityLaserPointer extends LivingEntity implements IEntityAdditionalSpawnData {
 	public static final DataParameter<Byte> AXIS_HIT = EntityDataManager.createKey(EntityLaserPointer.class, DataSerializers.BYTE);
 	public static final DataParameter<Boolean> HAND_HIT = EntityDataManager.createKey(EntityLaserPointer.class, DataSerializers.BOOLEAN);
 
-	private WeakReference<EntityPlayer> player;
+	private WeakReference<PlayerEntity> player;
 
-	public EntityLaserPointer(World worldIn, EntityPlayer player, boolean hit) {
-		super(worldIn);
+	public EntityLaserPointer(EntityType<EntityLaserPointer> laserPointer, World worldIn, PlayerEntity player, boolean hit) {
+		super(laserPointer, worldIn);
 		this.player = new WeakReference<>(player);
-		this.setSize(0.1F, 0.1F);
 		dataManager.set(HAND_HIT, hit);
 	}
 
-	public EntityLaserPointer(World worldIn) {
-		super(worldIn);
-		this.setSize(0.1F, 0.1F);
+	public EntityLaserPointer(EntityType<EntityLaserPointer> laserPointer, World worldIn) {
+		super(laserPointer, worldIn);
 	}
 
 	@Override
-	public void onEntityUpdate() {
+	public EntitySize getSize(Pose pose) {
+		return EntitySize.fixed(0.1F, 0.1F);
 	}
 
 	@Override
@@ -72,7 +77,7 @@ public class EntityLaserPointer extends LivingBaseEntityMod implements IEntityAd
 	public void updateRayPos() {
 		if (player == null || player.get() == null) {
 			this.setDead();
-		} else if (player.get().getActiveItemStack().isEmpty() || player.get().getActiveItemStack().getItem() != ModItems.LASER_PEN) {
+		} else if (Objects.requireNonNull(player.get()).getActiveItemStack().isEmpty() || player.get().getActiveItemStack().getItem() != ModItems.LASER_PEN) {
 			this.setDead();
 		} else {
 			RayTraceResult res = rayTrace(player.get(), ItemLaserPen.RANGE);

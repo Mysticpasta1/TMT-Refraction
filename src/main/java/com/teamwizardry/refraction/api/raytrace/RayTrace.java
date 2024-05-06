@@ -8,6 +8,7 @@ import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.Entity;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.*;
+import net.minecraft.util.math.vector.Vector3d;
 import net.minecraft.world.World;
 
 import javax.annotation.Nonnull;
@@ -32,7 +33,7 @@ public class RayTrace {
 	private Predicate<Block> predicateBlock;
 	private HashSet<BlockPos> skipBlockList = new HashSet<>();
 
-	public RayTrace(@Nonnull World world, @Nonnull Vec3d slope, @Nonnull Vec3d origin, double range) {
+	public RayTrace(@Nonnull World world, @Nonnull Vector3d slope, @Nonnull Vector3d origin, double range) {
 		this.world = world;
 		this.slope = slope;
 		this.origin = origin;
